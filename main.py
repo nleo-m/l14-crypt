@@ -1,20 +1,23 @@
+#!/usr/bin/env python3
+
 import argparse, unidecode, subprocess
 from sys import platform
 import ciphers as cipher
 
 
 def get_arguments():
-    parser = argparse.ArgumentParser(prog="L14's Crypt")
-    parser.add_argument('message', help='Mandatory, a message to be encrypted or decrypted, please use quotes if has any special character or spaces.')
-    parser.add_argument('method', nargs=1, choices=['e','d'], help='Choose wether to (e)ncrypt or (d)ecrypt given message.')
-    parser.add_argument('cipher', nargs ='*', choices =['a','r','c', 'n', 'h', 'v', 'ra'], help="Method to be used, can choose many, separating them with spaces. Order of choosing is respected.")
+    parser = argparse.ArgumentParser(prog="L14's Crypt", description="More info available at github.com/liandra-m/l14-crypt")
+    parser.add_argument('message', help='Mandatory, a message to be encrypted or decrypted, please use quotes if has any special character or spaces')
+    parser.add_argument('method', nargs=1, choices=['e','d'], help='Choose wether to (e)ncrypt or (d)ecrypt given message')
+    parser.add_argument('cipher', nargs ='*', help="Method to be used, can choose many, separating them with spaces. Order of choosing is respected. Available methods: r - reverse; c - caesar; n - char to number; h - horizontal matrix or colunar transposition; a - first as second; rk - random key transposition")
     parser.add_argument('-s', '--shift', nargs=1, help="Can be used with Caesar's Cipher to define how long to jump.", default=3)
-    parser.add_argument('-hs', '--horizontal_shift', nargs=1, help="Same as shift, but to define when to break words in horizontal matrix", default=4)
-    parser.add_argument('-pw', '--preserve_whitespaces', action='store_true', help="Use it to preserve whitespaces. Keep in mind that this may alter the result with a few methods like alternate and colunar transposition, thus being need to passed as argument when decrypting.")
+    parser.add_argument('-hs', '--horizontal_shift', nargs=1, help="Same as shift, but to define column size, or after how much steps break words in horizontal matrix", default=4)
+    parser.add_argument('-pw', '--preserve_whitespaces', action='store_true', help="Use it to preserve whitespaces. Keep in mind that this may alter the result with a few methods like alternate and colunar transposition, thus being need to be passed as argument when decrypting, default is false")
     parser.add_argument('-k', '--key', nargs='*', help="Specify a key to decrypt messages in key-based decryption")
-    parser.add_argument('-o', '--output', nargs=2, help="Saves it to a external file. The first argument is for location, the other one to the method (w)rite or (a)ppend.")
+    parser.add_argument('-o', '--output', nargs=2, help="Saves it to a external file. The first argument is for location, the other one to the method (w)rite or (a)ppend")
     parser.add_argument('-i', '--input', action='store_true', help="Open an external file and use it as message, type the location as an argument for message")
-    parser.add_argument('--clear', action='store_true')
+    parser.add_argument( '-c', '--clear', action='store_true', help="Tries to clear screen before showing ciphered message, default is false")
+    parser.add_argument('-co', '--copy', action='store_true', help="Tries to copy ciphered message to clipboard, default is false")
 
     arguments = parser.parse_args()
     return arguments
@@ -54,22 +57,24 @@ print(args)
 key = None
 
 for m in args.cipher:
-    if m == 'r':
+    m = m.lower()
+    if m == 'r' or 'reverse' in m:
         final_message = cipher.reverse(final_message, method)
-    elif m == 'c':
+    elif m == 'c' or 'caesar' in m:
         final_message = cipher.caesar(final_message, method, shift)
-    elif m == 'n':
+    elif m == 'n' or 'number' in m:
         final_message = cipher.char_num(final_message, method)
-    elif m == 'h':
+    elif m == 'h' or 'horizontal' in m:
         final_message = cipher.horizontal_matrix(final_message, method, h_shift)
-    elif m == 'a':
+    elif m == 'a' or 'alternate' in m:
         final_message = cipher.alternate(final_message, method)
-    elif m == 'ra':
+    elif m == 'rk' or 'random' in m:
         final_message, key = cipher.random_key(final_message, method, args.key)
+    else:
+        print(f'Unknow cipher method {m}')
 
 if args.clear == True:
     try:
-
         if platform.startswith('win32'):
             subprocess.run("cls", shell=True, check=True)
         else:
@@ -80,6 +85,22 @@ if args.clear == True:
         print("For some reason, it wasn't possible to clear screen!")
     
 print(f'\n{final_message}\n')
+
+if args.copy:
+    try:
+        if platform.startswith('win32'):
+            output = subprocess.run(f"echo {final_message} | clip", shell=True, check=True)
+        elif platform.startswith('darwin'):
+            output = subprocess.run(f"echo {final_message} | pbcopy", shell=True, check=True)
+        elif platform.startswith('linux'):
+            output = subprocess.run(f"echo {final_message} | xsel -b || echo {final_message} | xclip", shell=True, check=True)
+        
+        if output.returncode == 0:
+            print("Sucessfully copied to clipboard.")
+    except subprocess.CalledProcessError as error:
+        print(f"\n> Wasn't possible to copy message to clipboard!\n If you're on linux, make sure you've xsel or xclip installed.\n> Error: {error} ")
+    except:
+        print("For some reason, it wasn't possible to copy to clipboard!")
 
 if key != None:
     print(key)
