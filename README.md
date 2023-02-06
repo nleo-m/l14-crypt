@@ -70,18 +70,18 @@ Tries to copy the ciphered message to clipboard, using clip on windows, pbcopy o
 ## Use examples
 
 python3 main.py "just testing" e a r  
-Output: ginsttestju
+Output: ginsttestju  
 My message here is just testing, I want to (e)ncrypt using (a)lternate method and (r)everse;
 
 ./main.py "ginsttestju" d reverse Alternate  
-Output: justtesting
+Output: justtesting  
 I'm on a unix system like and have given exec permissions to my main.py script, passed the previous output as input message for (d)ecrypt using (r)everse, and (a)lternate methods. You get the idea, right? Since I've encrypted using alternate and then reverse, I first need to reverse and then alternate to get to the original message. White spaces weren't preserved, thus the words are stuck together.
 
 ./main.py "Hello World" e c -s 10 -pw  
 Output: Rovvy Gybvn
 
 ./main.py "Hello World" e h --horizontal_shift 2 -pw --copy  
-Output: HloWrdel ol  
+Output: HloWrdel ol    
 Sucessfully copied to clipboard
 
 ./main.py "lHoold rWle" d rk -k 9 0 4 7 3 10 5 8 6 2 1 --preserve_whitespaces -o ./my_output.txt w  
